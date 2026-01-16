@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Candy Match Game</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(#ff9a9e, #fad0c4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    margin: 10px;
+    color: #fff;
+  }
+
+  #score {
+    font-size: 20px;
+    color: #fff;
+    margin-bottom: 10px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    width: 90vw;
+    max-width: 360px;
+  }
+
+  .cell {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    touch-action: manipulation;
+  }
+
+  .red { background: #ff4d4d; }
+  .blue { background: #4d79ff; }
+  .green { background: #4dff88; }
+  .yellow { background: #ffe066; }
+  .purple { background: #c77dff; }
+  .orange { background: #ff9f43; }
+
+  .selected {
+    outline: 3px solid white;
+  }
+</style>
+</head>
+
+<body>
+
+<h1>🍬 Candy Match</h1>
+<div id="score">Score: 0</div>
+<div class="grid" id="grid"></div>
+
+<script>
+  const grid = document.getElementById("grid");
+  const scoreDisplay = document.getElementById("score");
+  const width = 8;
+  const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+  let squares = [];
+  let score = 0;
+  let selected = null;
+
+  function randomColor() {
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  // Create board
+  function createBoard() {
+    for (let i = 0; i < width * width; i++) {
+      const cell = document.createElement("div");
+      cell.classList.add("cell", randomColor());
+      cell.dataset.id = i;
+      cell.addEventListener("click", () => selectCell(cell));
+      grid.appendChild(cell);
+      squares.push(cell);
+    }
+  }
+
+  function selectCell(cell) {
+    if (!selected) {
+      selected = cell;
+      cell.classList.add("selected");
+    } else {
+      swapCells(selected, cell);
+      selected.classList.remove("selected");
+      selected = null;
+    }
+  }
+
+  function swapCells(c1, c2) {
+    const temp = c1.className;
+    c1.className = c2.className;
+    c2.className = temp;
+
+    if (!checkMatches()) {
+      // swap back if no match
+      const tempBack = c1.className;
+      c1.className = c2.className;
+      c2.className = tempBack;
+    }
+  }
+
+  function checkMatches() {
+    let matchFound = false;
+
+    // Rows
+    for (let i = 0; i < 64; i++) {
+      if (i % width > width - 3) continue;
+      const color = squares[i].classList[1];
+      if (
+        color &&
+        squares[i + 1].classList.contains(color) &&
+        squares[i + 2].classList.contains(color)
+      ) {
+        clearMatch([i, i + 1, i + 2]);
+        matchFound = true;
+      }
+    }
+
+    // Columns
+    for (let i = 0; i < 48; i++) {
+      const color = squares[i].classList[1];
+      if (
+        color &&
+        squares[i + width].classList.contains(color) &&
+        squares[i + width * 2].classList.contains(color)
+      ) {
+        clearMatch([i, i + width, i + width * 2]);
+        matchFound = true;
+      }
+    }
+
+    if (matchFound) {
+      setTimeout(dropCandies, 200);
+    }
+
+    return matchFound;
+  }
+
+  function clearMatch(indices) {
+    indices.forEach(i => {
+      squares[i].className = "cell";
+    });
+    score += 10;
+    scoreDisplay.textContent = "Score: " + score;
+  }
+
+  function dropCandies() {
+    for (let i = 63; i >= 0; i--) {
+      if (squares[i].classList.length === 1) {
+        if (i < width) {
+          squares[i].classList.add(randomColor());
+        } else {
+          squares[i].className = squares[i - width].className;
+          squares[i - width].className = "cell";
+        }
+      }
+    }
+    checkMatches();
+  }
+
+  createBoard();
+</script>
+
+</body>
+</html>
